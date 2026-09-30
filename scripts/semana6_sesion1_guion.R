@@ -2,7 +2,7 @@
 # GUION DE CLASE — Semana 6 · Sesión 1: Pivoteo de Datos (tidyr)
 # Fundamentos de Programación para Análisis Económico · UdeC-EAN
 #
-# Nombre: [TU NOMBRE]      Fecha: [FECHA]
+# Nombre: Camila Bravo Figueroa      Fecha: 24-09-2026
 #
 # CÓMO USAR: corre cada línea con Cmd/Ctrl+Enter.
 #   🔵 CORRE Y OBSERVA · ✏️ COMPLETA (____) · 🔮 PREDICE · 🟢 TU TURNO · ✅ Deberías ver
@@ -11,6 +11,8 @@
 # 🔵 CORRE Y OBSERVA — hoy se suma tidyr, el paquete que cambia la FORMA de una tabla
 library(dplyr)
 library(tidyr)
+
+install.packages("tidyr")               # Para installar tidyr
 
 # Este script se ejecuta desde la RAÍZ del proyecto (no desde guiones_clase/)
 ingresos_wide <- read.csv("data/raw/ingresos_wide.csv")
@@ -37,14 +39,15 @@ ingresos_wide |>
 
 # ✅ Deberías ver: 12 filas x 3 columnas. Cada región aparece 3 veces (una por año).
 #
-# 🔮 PREDICE: ¿por qué 12 filas y no 4? ______________________________________
+# 🔮 PREDICE: ¿por qué 12 filas y no 4? Porque ahora los años están repartidos 
+# en cada una de las regiones, entonces hay una fila por región para cada año (4*3).
 #
 # 💡 La información es LA MISMA. Solo cambió la forma: lo que antes era un
 #    encabezado de columna (a2020) ahora es un VALOR dentro de una celda.
 
 # ✏️ COMPLETA: lo mismo, pero eligiendo las columnas por PATRÓN (Semana 5).
 ingresos_wide |>
-  pivot_longer(cols = ____("a"), names_to = "anio", values_to = "ingreso")
+  pivot_longer(cols = starts_with("a"), names_to = "anio", values_to = "ingreso")
 
 # ✅ Deberías ver: exactamente la misma tabla de 12 x 3.
 
@@ -53,7 +56,8 @@ ingresos_wide |>
 # BLOQUE B — Limpiar los nombres al pivotar
 # -----------------------------------------------------------------------------
 # 🔮 PREDICE: en la tabla de arriba, la columna `anio` dice "a2020", no 2020.
-#    ¿De qué tipo es esa columna? ¿Se puede restar 2022 - 2020 con ella? ______
+#    ¿De qué tipo es esa columna? ¿Se puede restar 2022 - 2020 con ella? Es chr, 
+# por ende texto, no se pueden hacer operaciones matemáticas.
 
 # 🔵 CORRE Y OBSERVA — names_prefix quita el prefijo; as.numeric lo vuelve número
 ingresos_long <- ingresos_wide |>
@@ -78,20 +82,21 @@ class(ingresos_long$anio)
 # En formato largo, TODO lo de la Semana 5 funciona directo.
 # ✏️ COMPLETA: ingreso promedio por año.
 ingresos_long |>
-  group_by(____) |>
+  group_by(anio) |>
   summarise(ingreso_medio = mean(ingreso))
 
 # ✅ Deberías ver: 2020 = 415000 | 2021 = 443750 | 2022 = 482500
 
 # 🟢 TU TURNO: ahora el ingreso promedio por REGIÓN (todos los años juntos).
 ingresos_long |>
-  group_by(____) |>
+  group_by(region) |>
   summarise(ingreso_medio = mean(ingreso))
 
 # ✅ Deberías ver: Biobío la más alta (563333), Araucanía la más baja (378333)
 #
 # 🔮 PREDICE: intenta calcular el promedio por año sobre `ingresos_wide`
-#    (la tabla ANCHA). ¿Qué tendrías que escribir? ¿Es cómodo? ______________
+#    (la tabla ANCHA). ¿Qué tendrías que escribir? ¿Es cómodo? Habría que escribir 
+# una línea separada por cada año, por ende no es cómodo.
 #
 # 💡 Esa es la razón de pivotar: en formato ancho, "año" no es una variable
 #    sino tres columnas, y group_by() no puede agrupar por algo que no es columna.
@@ -126,12 +131,14 @@ ingresos_long |>
 #    Pista: last() y first() toman el último y el primer valor del grupo.
 ingresos_long |>
   group_by(region) |>
-  summarise(crecimiento = ____(ingreso) / ____(ingreso) - 1)
+  summarise(crecimiento = last(ingreso) / first(ingreso) - 1)
 
 # ✅ Deberías ver: Ñuble 0.184 | Maule 0.175 | Biobío 0.173 | Araucanía 0.111
 #
 # 🔮 PREDICE: ¿por qué first() y last() dan el orden correcto? ¿Qué pasaría
-#    si `anio` no estuviera ordenado? ____________________________________
+#    si `anio` no estuviera ordenado? Porque los datos están ordenados 
+# cronológicamente, de lo contrario, solo estaría tomando el primer y último 
+# elemento de la tabla, sin necesidad de que sean el primer y último año.
 #
 # 💡 Este cálculo es IMPOSIBLE en formato ancho sin escribir a mano
 #    (a2022 - a2020) / a2020. Y si mañana llega a2023, hay que reescribirlo.
@@ -146,14 +153,14 @@ datos <- data.frame(grupo   = c("Agricultura_Ñuble", "Servicios_Biobío"),
 datos
 
 # ✏️ COMPLETA: separa `grupo` en `sector` y `region`, cortando por "_".
-datos |> separate(grupo, into = c("____", "____"), sep = "_")
+datos |> separate(grupo, into = c("sector", "region"), sep = "_")
 
 # ✅ Deberías ver: dos columnas nuevas, sector y region, y ya no existe `grupo`.
 
 # 🟢 TU TURNO: haz el camino inverso. Separa y vuelve a unir, pero con "-".
 datos |>
   separate(grupo, into = c("sector", "region"), sep = "_") |>
-  ____("grupo", sector, region, sep = "-")
+  unite("grupo", sector, region, sep = "-")
 
 # ✅ Deberías ver: "Agricultura-Ñuble" y "Servicios-Biobío"
 #
