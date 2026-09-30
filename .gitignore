@@ -47,3 +47,4 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+data/processed/ene_2026_mjj_limpia.csv
