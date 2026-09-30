@@ -2,7 +2,7 @@
 # GUION DE CLASE — Semana 6 · Sesión 2: Datos Faltantes, Centinelas y Ponderación
 # Fundamentos de Programación para Análisis Económico · UdeC-EAN
 #
-# Nombre: [TU NOMBRE]      Fecha: [FECHA]
+# Nombre: Camila Bravo Figueroa      Fecha: 24-09-2026
 #
 # CÓMO USAR: corre cada línea con Cmd/Ctrl+Enter.
 #   🔵 CORRE Y OBSERVA · ✏️ COMPLETA (____) · 🔮 PREDICE · 🟢 TU TURNO · ✅ Deberías ver
@@ -18,7 +18,7 @@ library(dplyr)
 # -----------------------------------------------------------------------------
 # BLOQUE A — Abrir un archivo real
 # -----------------------------------------------------------------------------
-# 🔮 PREDICE: es un .csv, así que usas read.csv(). ¿Cuántas columnas esperas? ____
+# 🔮 PREDICE: es un .csv, así que usas read.csv(). ¿Cuántas columnas esperas? 222.
 
 intento <- read.csv("data/raw/ene-2026-06-mjj.csv", nrows = 5)
 ncol(intento)
@@ -30,7 +30,7 @@ ncol(intento)
 #    entró como un solo texto.
 
 # ✏️ COMPLETA: usa la variante que entiende separador ";" y decimales con coma.
-ene <- ____("data/raw/ene-2026-06-mjj.csv")
+ene <- read.csv2("data/raw/ene-2026-06-mjj.csv")          
 dim(ene)
 
 # ✅ Deberías ver: 97946 222
@@ -44,7 +44,7 @@ names(select(ene, starts_with("cae")))
 
 # ✏️ COMPLETA: quédate con las 7 columnas que usaremos hoy.
 #    region · sexo · edad · activ · habituales · efectivas · fact_cal
-empleo <- select(ene, region, sexo, edad, ____, ____, ____, ____)
+empleo <- select(ene, region, sexo, edad, activ, habituales, efectivas, fact_cal)
 dim(empleo)
 
 # ✅ Deberías ver: 97946 7
@@ -84,7 +84,9 @@ table(ene$mes_encuesta)
 #    independientes.
 
 # 🔮 PREDICE: si cada mes se entrevista a ~32.000 personas, ¿por qué el INE
-#    no publica la tasa de desocupación MES A MES en vez de juntar tres? ______
+#    no publica la tasa de desocupación MES A MES en vez de juntar tres? Por 
+# tiempo y calidad estadística, una muestra de un mes puede ser muy pequeña 
+# para tener peso representativo.
 
 # 🔵 CORRE Y OBSERVA — Aysén, la región más chica, mes a mes y en el trimestre
 ft <- filter(ene, activ %in% 1:2)               # fuerza de trabajo
@@ -171,10 +173,11 @@ NA + 5                # el NA se "contagia" a toda operación
 # 🔵 CORRE Y OBSERVA — la ENE tiene 15.305 personas sin condición de actividad
 table(empleo$activ, useNA = "ifany")
 
-# 🔮 PREDICE: ¿son datos perdidos? ¿Quiénes crees que son? __________________
+# 🔮 PREDICE: ¿son datos perdidos? ¿Quiénes crees que son? Pueden ser los menores 
+# de edad que no se consideren en edad de trabajar.
 
 # ✏️ COMPLETA: mira la edad de los que tienen activ en NA.
-summary(empleo$edad[____(empleo$activ)])
+summary(empleo$edad[is.na(empleo$activ)])
 
 # ✅ Deberías ver: máximo 14 años.
 #
@@ -191,12 +194,13 @@ summary(empleo$edad[____(empleo$activ)])
 # BLOQUE C — Detectar y medir
 # -----------------------------------------------------------------------------
 # ✏️ COMPLETA: cuántas horas faltan, y qué proporción (patrón sum/mean de S3).
-sum(____(empleo$habituales))
-mean(____(empleo$habituales))
+sum(is.na(empleo$habituales))
+mean(is.na(empleo$habituales))
 
 # ✅ Deberías ver: 56096 y 0.5727
 #
-# 🔮 PREDICE: ¿el 57 % de faltantes en horas es estructural o real? ¿Quiénes son? ____
+# 🔮 PREDICE: ¿el 57 % de faltantes en horas es estructural o real? ¿Quiénes son? 
+# Estructural, aquellas personas que no trabajan, no tienen horas trabajadas por defecto.
 
 # 🔵 CORRE Y OBSERVA — el mapa completo: NA por columna
 colSums(is.na(empleo))
@@ -207,7 +211,8 @@ sum(complete.cases(empleo))    # filas sin NINGÚN NA
 
 # ✅ Deberías ver: 41850
 #
-# 🔮 PREDICE: 41850 es exactamente el número de OCUPADOS. ¿Casualidad? ________
+# 🔮 PREDICE: 41850 es exactamente el número de OCUPADOS. ¿Casualidad? No, las 
+# personas que tienen respuestas en esas columnas son, precisamente, los ocupados.
 
 
 # -----------------------------------------------------------------------------
@@ -234,7 +239,8 @@ sum(is.na(imputado$habituales))
 
 # ✅ Deberías ver: 0
 #
-# 🔮 PREDICE: ¿qué acabamos de hacer con las 56.096 personas que NO trabajan? ____
+# 🔮 PREDICE: ¿qué acabamos de hacer con las 56.096 personas que NO trabajan? A 
+# aquellos que no trabajan les asignamos como horas trabajadas la mediana de los que sí.
 #
 # ⚠️ Les asignamos 42 horas semanales. El código corrió sin quejarse.
 #    Imputar sobre un faltante REAL puede justificarse; sobre uno ESTRUCTURAL, nunca.
@@ -249,12 +255,12 @@ sum(is.na(imputado$habituales))
 # 🔵 CORRE Y OBSERVA — ¿el máximo es sospechoso?
 summary(empleo$habituales)
 
-# 🔮 PREDICE: la semana tiene 168 horas. ¿Qué es un 999? ____________________
+# 🔮 PREDICE: la semana tiene 168 horas. ¿Qué es un 999? Equivale a un "no sabe"/"no responde" en el INE.
 
 # ✏️ COMPLETA: la regla del IQR (recap quantile(), S4).
 q    <- quantile(empleo$habituales, c(.25, .75), na.rm = TRUE)
 iqr  <- q[2] - q[1]
-tope <- q[2] + 1.5 * ____
+tope <- q[2] + 1.5 * iqr
 c(Q1 = q[[1]], Q3 = q[[2]], tope = tope[[1]])
 sum(empleo$habituales > tope, na.rm = TRUE)
 
@@ -270,10 +276,10 @@ c(con_999 = mean(horas, na.rm = TRUE),
 
 # ✅ Deberías ver: 40.33 y 40.14
 #
-# 🔮 PREDICE: el 999 movió el promedio 0,2 horas. ¿Ya está limpio? ____________
+# 🔮 PREDICE: el 999 movió el promedio 0,2 horas. ¿Ya está limpio? No necesariamente.
 
 # 🟢 TU TURNO: no mires solo el máximo. Mira TODA la cola alta, ordenada por frecuencia.
-sort(table(empleo$habituales[empleo$habituales > ____]), decreasing = TRUE)
+sort(table(empleo$habituales[empleo$habituales > 80]), decreasing = TRUE)
 
 # ✅ Deberías ver que 999 aparece 8 veces... y 888 aparece 103.
 #
@@ -296,8 +302,8 @@ head(empleo$fact_cal, 3)
 
 # ✏️ COMPLETA: la tasa de desocupación, contando PERSONAS y no filas.
 #    Definición: desocupados / (ocupados + desocupados)
-ocupados    <- sum(empleo$fact_cal[empleo$activ == ____], na.rm = TRUE)
-desocupados <- sum(empleo$fact_cal[empleo$activ == ____], na.rm = TRUE)
+ocupados    <- sum(empleo$fact_cal[empleo$activ == 1], na.rm = TRUE)
+desocupados <- sum(empleo$fact_cal[empleo$activ == 2], na.rm = TRUE)
 round(100 * desocupados / (ocupados + desocupados), 2)
 
 # ✅ Deberías ver: 9.53
@@ -311,7 +317,8 @@ format(round(ocupados + desocupados), big.mark = ".", decimal.mark = ",")
 # ✅ Deberías ver: 10.295.061  (no las 46.262 filas de la muestra)
 #
 # 🔮 PREDICE: sin ponderar, la tasa da 9,54 %. Ponderando, 9,53 %. Casi lo
-#    mismo. ¿Eso autoriza a ignorar el ponderador? ______________________
+#    mismo. ¿Eso autoriza a ignorar el ponderador? No, porque que la tasa no cambie 
+# mucho no significa que la variación bruta sea poca.
 #
 # ⚠️ No. La diferencia no está en la tasa, está en el NIVEL: sin fact_cal
 #    reportarías 4.412 desocupados en Chile, en vez de 981.044. Y las tasas
